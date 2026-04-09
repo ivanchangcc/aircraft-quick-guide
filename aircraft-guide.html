@@ -98,13 +98,12 @@
     padding: 5px;
     margin: 0 auto 40px;
     max-width: 700px;
-    flex-wrap: wrap;
   }
 
   .tab-btn {
     flex: 1;
-    min-width: 100px;
-    padding: 10px 12px;
+    min-width: 0;
+    padding: 10px 8px;
     background: transparent;
     border: none;
     border-radius: 7px;
@@ -337,7 +336,11 @@
 
   /* TIPS */
   .tips-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px; }
-  @media (max-width: 600px) { .tips-grid { grid-template-columns: 1fr; } .aircraft-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 600px) {
+    .tips-grid { grid-template-columns: 1fr; }
+    .aircraft-grid { grid-template-columns: 1fr; }
+    .tab-btn { padding: 8px 4px; font-size: 0.62rem; letter-spacing: 0.03em; }
+  }
 
   .tip-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; transition: border-color 0.2s; }
   .tip-card:hover { border-color: var(--border-strong); }
@@ -1037,8 +1040,10 @@
     });
   }
 
-  // Load first tab images on page load
-  window.addEventListener('load', () => loadImagesInPanel('boeing'));
+  // Load all tab images on page load
+  window.addEventListener('load', () => {
+    ['boeing', 'airbus', 'engine', 'tips'].forEach(loadImagesInPanel);
+  });
 </script>
 </body>
 </html>
