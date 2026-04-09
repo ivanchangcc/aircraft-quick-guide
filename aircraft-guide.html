@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>航空機型辨識指南</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=IBM+Plex+Mono:wght@300;400;600&family=Noto+Sans+TC:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f6fa;
+    --surface: #ffffff;
+    --surface2: #eef1f7;
+    --boeing-blue: #0062cc;
+    --boeing-light: #0055b3;
+    --airbus-teal: #007a62;
+    --airbus-light: #00a882;
+    --accent-amber: #b36a00;
+    --text-primary: #0f1923;
+    --text-secondary: #4a5a6e;
+    --text-dim: #8a9ab0;
+    --border: rgba(0,0,0,0.08);
+    --border-strong: rgba(0,0,0,0.15);
+    --glow-boeing: 0 4px 20px rgba(0,98,204,0.15);
+    --glow-airbus: 0 4px 20px rgba(0,168,130,0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: 'Noto Sans TC', sans-serif;
+    font-weight: 300;
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,98,204,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,98,204,0.06) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  header {
+    text-align: center;
+    padding: 60px 20px 50px;
+  }
+
+  .header-eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.3em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  header h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: clamp(1.8rem, 5vw, 3.2rem);
+    line-height: 1.1;
+    background: linear-gradient(135deg, var(--boeing-light) 0%, var(--text-primary) 50%, var(--airbus-teal) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 14px;
+  }
+
+  header .subtitle {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    letter-spacing: 0.05em;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .tab-bar {
+    display: flex;
+    gap: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 5px;
+    margin: 0 auto 40px;
+    max-width: 700px;
+    flex-wrap: wrap;
+  }
+
+  .tab-btn {
+    flex: 1;
+    min-width: 100px;
+    padding: 10px 12px;
+    background: transparent;
+    border: none;
+    border-radius: 7px;
+    color: var(--text-secondary);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  .tab-btn:hover { color: var(--text-primary); background: var(--border); }
+  .tab-btn.active-boeing { background: rgba(0,98,204,0.2); color: var(--boeing-light); border: 1px solid rgba(0,98,204,0.4); }
+  .tab-btn.active-airbus { background: rgba(0,201,160,0.15); color: var(--airbus-teal); border: 1px solid rgba(0,201,160,0.4); }
+  .tab-btn.active-engine { background: rgba(255,184,48,0.15); color: var(--accent-amber); border: 1px solid rgba(255,184,48,0.4); }
+  .tab-btn.active-tips { background: rgba(0,0,0,0.06); color: var(--text-primary); border: 1px solid var(--border-strong); }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; animation: fadeIn 0.3s ease; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .brand-badge {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 0.75rem;
+    padding: 4px 12px;
+    border-radius: 4px;
+    letter-spacing: 0.1em;
+  }
+
+  .badge-boeing { background: rgba(0,98,204,0.2); color: var(--boeing-light); border: 1px solid rgba(0,98,204,0.4); }
+  .badge-airbus { background: rgba(0,201,160,0.15); color: var(--airbus-teal); border: 1px solid rgba(0,201,160,0.4); }
+  .badge-engine { background: rgba(255,184,48,0.15); color: var(--accent-amber); border: 1px solid rgba(255,184,48,0.4); }
+
+  .section-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  /* AIRCRAFT CARD — NEW LAYOUT with image */
+  .aircraft-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .aircraft-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color 0.25s, box-shadow 0.25s, transform 0.2s;
+  }
+
+  .aircraft-card:hover { transform: translateY(-2px); }
+  .aircraft-card.boeing:hover { border-color: rgba(0,98,204,0.5); box-shadow: var(--glow-boeing); }
+  .aircraft-card.airbus:hover { border-color: rgba(0,201,160,0.4); box-shadow: var(--glow-airbus); }
+
+  /* IMAGE AREA */
+  .card-image {
+    width: 100%;
+    height: 180px;
+    position: relative;
+    overflow: hidden;
+    background: #dde3ee;
+  }
+
+  .card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 40%;
+    transition: transform 0.5s ease, opacity 0.3s;
+    opacity: 0;
+  }
+
+  .card-image img.loaded { opacity: 1; }
+
+  .card-image:hover img { transform: scale(1.04); }
+
+  .img-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent 50%, var(--surface) 100%);
+    z-index: 1;
+  }
+
+  .img-loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    z-index: 0;
+  }
+
+  .img-credit {
+    position: absolute;
+    bottom: 6px;
+    right: 8px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.5rem;
+    color: rgba(0,0,0,0.3);
+    z-index: 2;
+    background: rgba(255,255,255,0.7);
+    padding: 1px 5px;
+    border-radius: 2px;
+  }
+
+  .card-header {
+    padding: 14px 20px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .model-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+  }
+
+  .boeing .model-name { color: var(--boeing-light); }
+  .airbus .model-name { color: var(--airbus-teal); }
+
+  .model-type {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+
+  .engine-count {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  .boeing .engine-count { background: rgba(0,98,204,0.15); color: var(--boeing-light); }
+  .airbus .engine-count { background: rgba(0,201,160,0.1); color: var(--airbus-teal); }
+
+  .card-body { padding: 14px 20px; }
+
+  .id-points { list-style: none; display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+  .id-point { display: flex; gap: 10px; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4; }
+  .point-icon { font-size: 0.75rem; width: 18px; flex-shrink: 0; margin-top: 1px; }
+
+  .card-footer {
+    padding: 10px 20px;
+    background: rgba(0,0,0,0.04);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .engine-info { font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem; color: var(--text-dim); }
+  .engine-highlight { color: var(--accent-amber); }
+  .seats-range { font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem; color: var(--text-dim); }
+
+  .shape-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.68rem;
+    padding: 2px 8px;
+    border-radius: 3px;
+    margin-top: 2px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .shape-boeing { background: rgba(0,98,204,0.1); color: rgba(61,155,255,0.8); }
+  .shape-airbus { background: rgba(0,201,160,0.08); color: rgba(0,201,160,0.8); }
+
+  /* ENGINE TABLE */
+  .engine-section { margin-bottom: 40px; }
+
+  .engine-maker-header {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--accent-amber);
+    letter-spacing: 0.1em;
+    margin: 24px 0 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255,184,48,0.15);
+  }
+
+  .engine-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; margin-bottom: 16px; }
+  .engine-table th {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 8px 14px;
+    text-align: left;
+    background: rgba(0,0,0,0.05);
+    border-bottom: 1px solid var(--border);
+  }
+  .engine-table td { padding: 9px 14px; border-bottom: 1px solid var(--border); color: var(--text-secondary); vertical-align: top; }
+  .engine-table tr:hover td { background: rgba(0,0,0,0.02); color: var(--text-primary); }
+  .engine-model-name { font-family: 'IBM Plex Mono', monospace; color: var(--accent-amber); font-weight: 600; white-space: nowrap; }
+
+  .compatible-models { display: flex; flex-wrap: wrap; gap: 4px; }
+  .model-chip { font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; padding: 2px 6px; border-radius: 3px; white-space: nowrap; }
+  .chip-boeing { background: rgba(0,98,204,0.15); color: var(--boeing-light); }
+  .chip-airbus { background: rgba(0,201,160,0.12); color: var(--airbus-teal); }
+
+  /* TIPS */
+  .tips-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px; }
+  @media (max-width: 600px) { .tips-grid { grid-template-columns: 1fr; } .aircraft-grid { grid-template-columns: 1fr; } }
+
+  .tip-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; transition: border-color 0.2s; }
+  .tip-card:hover { border-color: var(--border-strong); }
+  .tip-number { font-family: 'Orbitron', monospace; font-size: 2rem; font-weight: 900; color: var(--text-dim); line-height: 1; margin-bottom: 10px; }
+  .tip-title { font-size: 0.9rem; font-weight: 700; color: var(--text-primary); margin-bottom: 10px; }
+  .tip-body { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.6; }
+
+  .compare-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+  .compare-item { padding: 8px 12px; border-radius: 8px; font-size: 0.75rem; line-height: 1.4; }
+  .compare-boeing { background: rgba(0,98,204,0.1); border-left: 3px solid var(--boeing-blue); }
+  .compare-airbus { background: rgba(0,201,160,0.08); border-left: 3px solid var(--airbus-teal); }
+  .compare-label { font-family: 'IBM Plex Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; }
+  .compare-boeing .compare-label { color: var(--boeing-light); }
+  .compare-airbus .compare-label { color: var(--airbus-teal); }
+  .compare-text { color: var(--text-secondary); }
+
+  .winglet-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-top: 12px; }
+  .winglet-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+  .winglet-name { font-family: 'Orbitron', sans-serif; font-size: 0.75rem; font-weight: 700; margin-bottom: 6px; }
+  .boeing-wl { color: var(--boeing-light); }
+  .airbus-wl { color: var(--airbus-teal); }
+  .winglet-desc { font-size: 0.75rem; color: var(--text-secondary); }
+
+  .divider { height: 1px; background: linear-gradient(90deg, transparent, var(--border-strong), transparent); margin: 32px 0; }
+  .scroll-hint { text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; color: var(--text-dim); letter-spacing: 0.15em; margin-top: 24px; }
+
+  .cat-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin: 28px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .cat-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="header-eyebrow">// AVIATION IDENTIFICATION GUIDE v2.1</div>
+    <h1>波音 vs 空中巴士<br>機型辨識手冊</h1>
+    <div class="subtitle">Boeing · Airbus · Engine Manufacturers · ID Tips</div>
+  </header>
+
+  <div class="tab-bar">
+    <button class="tab-btn active-boeing" onclick="switchTab('boeing', this)">✈ 波音 Boeing</button>
+    <button class="tab-btn" onclick="switchTab('airbus', this)">✈ 空巴 Airbus</button>
+    <button class="tab-btn" onclick="switchTab('engine', this)">⚙ 引擎廠牌</button>
+    <button class="tab-btn" onclick="switchTab('tips', this)">👁 快速辨識</button>
+  </div>
+
+  <!-- ===== BOEING TAB ===== -->
+  <div id="tab-boeing" class="tab-panel active">
+    <div class="section-header">
+      <span class="brand-badge badge-boeing">BOEING</span>
+      <span class="section-title">波音各機型辨識要點</span>
+    </div>
+
+    <div class="cat-label">窄體客機 Narrowbody</div>
+    <div class="aircraft-grid">
+
+      <!-- 737 NG -->
+      <div class="aircraft-card boeing">
+        <div class="card-image">
+          <div class="img-loading">LOADING IMAGE…</div>
+          <img
+            data-src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Southwest_B737-800_N8301J.jpg/1280px-Southwest_B737-800_N8301J.jpg"
+            alt="Boeing 737 NG"
+            onload="this.classList.add('loaded')"
+            onerror="this.parentElement.querySelector('.img-loading').textContent='737 NG'">
+          <div class="img-overlay"></div>
+          <div class="img-credit">© Wikimedia Commons CC-BY-SA</div>
+        </div>
+        <div class="card-header">
+          <div>
+            <div class="model-name">737 Classic / NG</div>
+            <div class="model-type">737-100 ~ 737-900ER</div>
+          </div>
+          <div class="engine-count">雙發 Twin</div>
+        </div>
+        <div class="card-body">
+          <ul class="id-points">
+            <li class="id-point"><span class="point-icon">🔵</span><strong style="color:#0f1923">引擎扁平橢圓形</strong> — 因淨空不足，CFM56 引擎下半部被壓扁，底部幾乎平整，是最大特徵</li>
+            <li class="id-point"><span class="point-icon">🔵</span>機鼻較尖，駕駛艙玻璃呈三角形下拉</li>
+            <li class="id-point"><span class="point-icon">🔵</span>NG 版（-700/800/900）翼尖有上翹 Blended Winglet</li>
+          </ul>
+          <span class="shape-tag shape-boeing">▷ 扁引擎 = 737 最大識別點</span>
+        </div>
+        <div class="card-footer">
+          <span class="engine-info">引擎：<span class="engine-highlight">CFM56-3 / CFM56-7B</span></span>
+          <span class="seats-range">座位：85–215</span>
+        </div>
+      </div>
+
+      <!-- 737 MAX -->
+      <div class="aircraft-card boeing">
+        <div class="card-image">
+          <div class="img-loading">LOADING IMAGE…</div>
+          <img
+            data-src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Boeing_737_MAX_8_N8705Q.jpg/1280px-Boeing_737_MAX_8_N8705Q.jpg"
+            alt="Boeing 737 MAX"
+            onload="this.classList.add('loaded')"
+            onerror="this.parentElement.querySelector('.img-loading').textContent='737 MAX'">
+          <div class="img-overlay"></div>
+          <div class="img-credit">© Wikimedia Commons CC-BY-SA</div>
+        </div>
+        <div class="card-header">
+          <div>
+            <div class="model-name">737 MAX</div>
+            <div class="model-type">MAX 7 / 8 / 9 / 10</div>
+          </div>
+          <div class="engine-count">雙發 Twin</div>
+        </div>
+        <div class="card-body">
+          <ul class="id-points">
+            <li class="id-point"><span class="point-icon">🔵</span><strong style="color:#0f1923">AT Winglet 雙片刀鋒翼尖</strong> — 上下各一片，比 NG 更細長，是最直接辨識點</li>
+            <li class="id-point"><span class="point-icon">🔵</span>LEAP-1B 引擎比 CFM56 大，掛點前移並上斜安裝</li>
+            <li class="id-point"><span class="point-icon">🔵</span>引擎進氣口底部仍偏平（但比 NG 圓）</li>
+          </ul>
+          <span class="shape-tag shape-boeing">▷ 雙片刀鋒翼尖 = 737 MAX</span>
+        </div>
+        <div class="card-footer">
+          <span class="engine-info">引擎：<span class="engine-highlight">CFM LEAP-1B</span></span>
+          <span class="seats-range">座位：138–230</span>
+        </div>
+      </div>
+
+      <!-- 757 -->
+      <div class="aircraft-card boeing">
+        <div class="card-image">
+          <div class="img-loading">LOADING IMAGE…</div>
+          <img
+            data-src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Delta_Air_Lines_Boeing_757-200_N6713Y_-_Flickr_-_skinnylawyer_%281%29.jpg/1280px-Delta_Air_Lines_Boeing_757-200_N6713Y_-_Flickr_-_skinnylawyer_%281%29.jpg"
+            alt="Boeing 757"
+            onload="this.classList.add('loaded')"
+            onerror="this.parentElement.querySelector('.img-loading').textContent='757'">
+          <div class="img-overlay"></div>
+          <div class="img-credit">© Wikimedia Commons CC-BY-SA</div>
+        </div>
+        <div class="card-header">
+          <div>
+            <div class="model-name">757</div>
+            <div class="model-type">757-200 / 757-300</div>
+          </div>
+          <div class="engine-count">雙發 Twin</div>
+        </div>
+        <div class="card-body">
+          <ul class="id-points">
+            <li class="id-point"><span class="point-icon">🔵</span><strong style="color:#0f1923">修長細身配巨大引擎</strong> — 機身細長但引擎很大，比例視覺上很突出</li>
+            <li class="id-point"><span class="point-icon">🔵</span>機鼻細長尖銳，駕駛艙有明顯下巴（chin）</li>
+            <li class="id-point"><span class="point-icon">🔵</span>已停產，現多見於歐美中距離航線</li>
+          </ul>
+          <span class="shape-tag shape-boeing">▷ 細長機身大引擎 = 757</span>
+        </div>
+        <div class="card-footer">
+          <span class="engine-info">引擎：<span class="engine-highlight">RR RB211 / P&W PW2000</span></span>
+          <span class="seats-range">座位：200–295</span>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="cat-label">廣體客機 Widebody</div>
+    <div class="aircraft-grid">
+
+      <!-- 747 -->
+      <div class="aircraft-card boeing">
+        <div class="card-image">
+          <div class="img-loading">LOADING IMAGE…</div>
+          <img
+            data-src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/JCAB_Boeing_747-400_JA8105_-_Flickr_-_caribb_%2816%29.jpg/1280px-JCAB_Boeing_747-400_JA8105_-_Flickr_-_caribb_%2816%29.jpg"
+            alt="Boeing 747"
+            onload="this.classList.add('loaded')"
+            onerror="this.parentElement.querySelector('.img-loading').textContent='747'">
+          <div class="img-overlay"></div>
+          <div class="img-credit">© Wikimedia Commons CC-BY-SA</div>
+        </div>
+        <div class="card-header">
+          <div>
+            <div class="model-name">747</div>
+            <div class="model-type">747-400 / 747-8</div>
+          </div>
+          <div class="engine-count">四發 Quad</div>
+        </div>
+        <div class="card-body">
+          <ul class="id-points">
+            <li class="id-point"><span class="point-icon">🔵</span><strong style="color:#0f1923">駝背雙層艙（上層甲板）</strong> — 機頭隆起部分是最大辨識點，全球僅此機型</li>
+            <li class="id-point"><span class="point-icon">🔵</span>四具引擎掛於翼下，-400 翼尖有上翹 Winglet</li>
+            <li class="id-point"><span class="point-icon">🔵</span>-8 版機身更長，翼尖為鋸齒狀 Raked Wingtip</li>
+          </ul>
+          <span class="shape-tag shape-boeing">▷ 駝背就是 747，一眼認出</span>
+        </div>
+        <div class="card-footer">
+          <span class="engine-info">引擎：<span class="engine-highlight">GE CF6 / P&W PW4000 / RR RB211 / GEnx</span></span>
+          <span class="seats-range">座位：366–605</span>
+        </div>
+      </div>
+
+      <!-- 767 -->
+      <div class="aircraft-card boeing">
+        <div class="card-image">
+          <div class="img-loading">LOADING IMAGE…</div>
+          <img
+            data-src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/All_Nippon_Airways_Boeing_767-300ER_JA8579_-_Flickr_-_caribb_%2810%29.jpg/1280px-All_Nippon_Airways_Boeing_767-300ER_JA8579_-_Flickr_-_caribb_%2810%29.jpg"
+            alt="Boeing 767"
+            onload="this.classList.add('loaded')"
+            onerror="this.parentElement.querySelector('.img-loading').textContent='767'">
+          <div class="img-overlay"></div>
+          <div class="img-credit">© Wikimedia Commons CC-BY-SA</div>
+        </div>
+        <div class="card-header">
+          <div>
+            <div class="model-name">767</div>
+            <div class="model-type">767-200 / 300 / 400ER</div>
+          </div>
+          <div class="engine-count">雙發 Twin</div>
+        </div>
+        <div class="card-body">
+          <ul class="id-points">
+            <li class="id-point"><span class="point-icon">🔵</span><strong style="color:#0f1923">中型廣體，機身較圓</strong> — 2-3-2 座位布局，介於窄體與大型廣體之間</li>
+            <li class="id-point"><span class="point-icon">🔵</span>機鼻較圓，駕駛艙玻璃與 757 同家族但較寬</li>
+            <li class="id-point"><span class="point-icon">🔵</span>大量用於貨機（UPS/FedEx）</li>
+          </ul>
+          <span class="shape-tag shape-boeing">▷ 中等胖身 + 雙發 = 767</span>
+        </div>
+        <div class="card-footer">
+          <span class="engine-info">引擎：<span class="engine-highlight">GE CF6-80 / P&W PW4000</span></span>
+          <span class="seats-range">座位：181–375</span>
+        </div>
+      </div>
+
+      <!-- 777 -->
+      <div class="aircraft-card boeing">
+        <div class="card-image">
+          <div class="img-loading">LOADING IMAGE…</div>
+          <img
+            data-src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Emirates_Boeing_777-300ER_A6-ECU_on_runway_%28cropped%29.jpg/1280px-Emirates_Boeing_777-300ER_A6-ECU_on_runway_%28cropped%29.jpg"
+            alt="Boeing 777"
+            onload="this.classList.add('loaded')"
+            onerror="this.parentElement.querySelector('.img-loading').textContent='777'">
+          <div class="img-overlay"></div>
+          <div class="img-credit">© Wikimedia Commons CC-BY-SA</div>
+        </div>
+        <div class="card-header">
+          <div>
+            <div class="model-name">777</div>
+            <div class="model-type">777-200 / 300 / -200LR / -300ER / X</div>
+          </div>
+          <div class="engine-count">雙發 Twin</div>
+        </div>
+        <div class="card-body">
+          <ul class="id-points">
+            <li class="id-point"><span class="point-icon">🔵</span><strong style="color:#0f1923">世界最大雙發引擎</strong> — GE90 直徑約 3.4m，站旁邊引擎比人高</li>
+            <li class="id-point"><span class="point-icon">🔵</span>六輪式主起落架（兩組各 6 輪），地面停靠時很壯觀</li>
+            <li class="id-point"><span class="point-icon">🔵</span>777X：摺疊式翼尖（地面摺疊，飛行展開）</li>
+          </ul>
+          <span class="shape-tag shape-boeing">▷ 超大引擎 + 六輪起落架 = 777</span>
+        </div>
+        <div class="card-footer">
+          <span class="engine-info">引擎：<span class="engine-highlight">GE GE90 / GE9X（777X）</span></span>
+          <span class="seats-range">座位：305–550</span>
+        </div>
+      </div>
+
+      <!-- 787 -->
+      <div class="aircraft-card boeing">
+        <div class="card-image">
+          <div class="img-loading">LOADING IMAGE…</div>
+          <img
+            data-src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/All_Nippon_Airways_Boeing_787-9_Dreamliner_JA830A_OKJ_in_flight.jpg/1280px-All_Nippon_Airways_Boeing_787-9_Dreamliner_JA830A_OKJ_in_flight.jpg"
+            alt="Boeing 787 Dreamliner"
+            onload="this.classList.add('loaded')"
+            onerror="this.parentElement.querySelector('.img-loading').textContent='787'">
+          <div class="img-overlay"></div>
+          <div class="img-credit">© Wikimedia Commons CC-BY-SA</div>
+        </div>
+        <div class="card-header">
+          <div>
+            <div class="model-name">787 Dreamliner</div>
+            <div class="model-type">787-8 / -9 / -10</div>
+          </div>
+          <div class="engine-count">雙發 Twin</div>
+        </div>
+        <div class="card-body">
+          <ul class="id-points">
+            <li class="id-point"><span class="point-icon">🔵</span><strong style="color:#0f1923">鋸齒引擎唇口（Chevron）</strong> — 進氣口和排氣口邊緣有明顯鋸齒，降噪設計</li>
+            <li class="id-point"><span class="point-icon">🔵</span>翼尖向上大幅度後掠彎曲（Raked Wingtip）</li>
+            <li class="id-point"><span class="point-icon">🔵</span>碳纖維複合材料機身，顏色較深偏藍灰</li>
+          </ul>
+          <span class="shape-tag shape-boeing">▷ 鋸齒進氣口 = 787 關鍵特徵</span>
+        </div>
+        <div class="card-footer">
+          <span class="engine-info">引擎：<span class="engine-highlight">GE GEnx / RR Trent 1000</span></span>
+          <span class="seats-range">座位：242–330</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== AIRBUS TAB ===== -->
+  <div id="tab-airbus" class="tab-panel">
+    <div class="section-header">
+      <span class="brand-badge badge-airbus">AIRBUS</span>
+      <span class="section-title">空巴各機型辨識要點</span>
+    </div>
+
+    <div class="cat-label">窄體客機 Narrowbody — A320 Family</div>
+    <div class="aircraft-grid">
+
+      <!-- A320 CEO -->
+      <div class="aircraft-card airbus">
+        <div class="card-image">
+          <div class="img-loading">LOADING IMAGE…</div>
+          <img
+            data-src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Airbus_A320-233%2C_LAN_Airlines_AN1930895.jpg/1280px-Airbus_A320-233%2C_LAN_Airlines_AN1930895.jpg"
+            alt="Airbus A320 CEO"
+            onload="this.classList.add('loaded')"
+            onerror="this.parentElement.querySelector('.img-loading').textContent='A320 CEO'">
+          <div class="img-overlay"></div>
+          <div class="img-credit">© Wikimedia Commons CC-BY-SA</div>
+        </div>
+        <div class="card-header">
+          <div>
+            <div class="model-name">A318/A319/A320/A321</div>
+            <div class="model-type">CEO（舊引擎版）</div>
+          </div>
+          <div class="engine-count">雙發 Twin</div>
+        </div>
+        <div class="card-body">
+          <ul class="id-points">
+            <li class="id-point"><span class="point-icon">🟢</span><strong style="color:#0f1923">機鼻圓滑無下巴</strong> — 機頭比波音 737 更圓更鈍</li>
+            <li class="id-point"><span class="point-icon">🟢</span>引擎為正圓形（不扁），離地高度足夠</li>
+            <li class="id-point"><span class="point-icon">🟢</span>翼尖為雙片翼刀（Wingtip Fence）：上下各一小片</li>
+            <li class="id-point"><span class="point-icon">🟢</span>尾錐（APU）細長尖管狀，比波音更尖</li>
+          </ul>
+          <span class="shape-tag shape-airbus">▷ 圓引擎 + 雙片翼刀 = A320 CEO</span>
+        </div>
+        <div class="card-footer">
+          <span class="engine-info">引擎：<span class="engine-highlight">CFM56-5B / IAE V2500</span></span>
+          <span class="seats-range">座位：107–220</span>
+        </div>
+      </div>
+
+      <!-- A320 NEO -->
+      <div class="aircraft-card airbus">
+        <div class="card-image">
+          <div class="img-loading">LOADING IMAGE…</div>
+          <img
+            data-src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/IndiGo_Airbus_A320neo_VT-ITH.jpg/1280px-IndiGo_Airbus_A320neo_VT-ITH.jpg"
+            alt="Airbus A320neo"
+            onload="this.classList.add('loaded')"
+            onerror="this.parentElement.querySelector('.img-loading').textContent='A320neo'">
+          <div class="img-overlay"></div>
+          <div class="img-credit">© Wikimedia Commons CC-BY-SA</div>
+        </div>
+        <div class="card-header">
+          <div>
+            <div class="model-name">A320neo / A321neo</div>
+            <div class="model-type">NEO 新引擎選項</div>
+          </div>
+          <div class="engine-count">雙發 Twin</div>
+        </div>
+        <div class="card-body">
+          <ul class="id-points">
+            <li class="id-point"><span class="point-icon">🟢</span><strong style="color:#0f1923">翼尖為鯊魚鰭（Sharklet）</strong> — 細長向上彎曲，遠大於 CEO 翼刀，neo 最大外觀差異</li>
+            <li class="id-point"><span class="point-icon">🟢</span>引擎更大（LEAP-1A 或 PW1100G），進氣口更寬</li>
+            <li class="id-point"><span class="point-icon">🟢</span>機身外觀與 CEO 幾乎相同，主要看翼尖和引擎</li>
+          </ul>
+          <span class="shape-tag shape-airbus">▷ 鯊魚鰭翼尖 = neo 的標誌</span>
+        </div>
+        <div class="card-footer">
+          <span class="engine-info">引擎：<span class="engine-highlight">CFM LEAP-1A / P&W PW1100G-JM</span></span>
+          <span class="seats-range">座位：150–244</span>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="cat-label">廣體客機 Widebody</div>
+    <div class="aircraft-grid">
+
+      <!-- A330 -->
+      <div class="aircraft-card airbus">
+        <div class="card-image">
+          <div class="img-loading">LOADING IMAGE…</div>
+          <img
+            data-src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Cathay_Pacific_A330-300_B-HLR_Approching_London_Heathrow_%284353783419%29.jpg/1280px-Cathay_Pacific_A330-300_B-HLR_Approching_London_Heathrow_%284353783419%29.jpg"
+            alt="Airbus A330"
+            onload="this.classList.add('loaded')"
+            onerror="this.parentElement.querySelector('.img-loading').textContent='A330'">
+          <div class="img-overlay"></div>
+          <div class="img-credit">© Wikimedia Commons CC-BY-SA</div>
+        </div>
+        <div class="card-header">
+          <div>
+            <div class="model-name">A330</div>
+            <div class="model-type">A330-200 / -300 / -900neo</div>
+          </div>
+          <div class="engine-count">雙發 Twin</div>
+        </div>
+        <div class="card-body">
+          <ul class="id-points">
+            <li class="id-point"><span class="point-icon">🟢</span><strong style="color:#0f1923">機翼極長幾乎水平延伸</strong> — 無明顯上反角，翼展大</li>
+            <li class="id-point"><span class="point-icon">🟢</span>機身截面與 A340 相同，靠數引擎數量區分</li>
+            <li class="id-point"><span class="point-icon">🟢</span>-200 機身較短，-300 較長，-900neo 翼尖為鯊魚鰭</li>
+          </ul>
+          <span class="shape-tag shape-airbus">▷ 雙發 + 大翼展 = A330（非 A340）</span>
+        </div>
+        <div class="card-footer">
+          <span class="engine-info">引擎：<span class="engine-highlight">GE CF6 / P&W PW4000 / RR Trent 700/7000</span></span>
+          <span class="seats-range">座位：253–440</span>
+        </div>
+      </div>
+
+      <!-- A340 -->
+      <div class="aircraft-card airbus">
+        <div class="card-image">
+          <div class="img-loading">LOADING IMAGE…</div>
+          <img
+            data-src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Lufthansa_A340-600_D-AIHK_Heathrow_2007_%28cropped%29.jpg/1280px-Lufthansa_A340-600_D-AIHK_Heathrow_2007_%28cropped%29.jpg"
+            alt="Airbus A340"
+            onload="this.classList.add('loaded')"
+            onerror="this.parentElement.querySelector('.img-loading').textContent='A340'">
+          <div class="img-overlay"></div>
+          <div class="img-credit">© Wikimedia Commons CC-BY-SA</div>
+        </div>
+        <div class="card-header">
+          <div>
+            <div class="model-name">A340</div>
+            <div class="model-type">A340-200/300/500/600</div>
+          </div>
+          <div class="engine-count">四發 Quad</div>
+        </div>
+        <div class="card-body">
+          <ul class="id-points">
+            <li class="id-point"><span class="point-icon">🟢</span><strong style="color:#0f1923">四具引擎 + A330 相同機身</strong> — 外型與 A330 幾乎一樣，靠數引擎區分</li>
+            <li class="id-point"><span class="point-icon">🟢</span>-500/-600 為超長機身</li>
+            <li class="id-point"><span class="point-icon">🟢</span>現已停產，部分航空仍在飛</li>
+          </ul>
+          <span class="shape-tag shape-airbus">▷ 四發引擎 = 一定是 A340！</span>
+        </div>
+        <div class="card-footer">
+          <span class="engine-info">引擎：<span class="engine-highlight">CFM CFM56-5C / RR Trent 500</span></span>
+          <span class="seats-range">座位：261–475</span>
+        </div>
+      </div>
+
+      <!-- A350 -->
+      <div class="aircraft-card airbus">
+        <div class="card-image">
+          <div class="img-loading">LOADING IMAGE…</div>
+          <img
+            data-src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Qatar_Airways_A350_A7-ALA_MUC_2015_04.jpg/1280px-Qatar_Airways_A350_A7-ALA_MUC_2015_04.jpg"
+            alt="Airbus A350"
+            onload="this.classList.add('loaded')"
+            onerror="this.parentElement.querySelector('.img-loading').textContent='A350'">
+          <div class="img-overlay"></div>
+          <div class="img-credit">© Wikimedia Commons CC-BY-SA</div>
+        </div>
+        <div class="card-header">
+          <div>
+            <div class="model-name">A350</div>
+            <div class="model-type">A350-900 / -1000</div>
+          </div>
+          <div class="engine-count">雙發 Twin</div>
+        </div>
+        <div class="card-body">
+          <ul class="id-points">
+            <li class="id-point"><span class="point-icon">🟢</span><strong style="color:#0f1923">駕駛艙「黑色眼影」</strong> — 機頭側面深色遮光漆，遠看像戴眼鏡，極具辨識性</li>
+            <li class="id-point"><span class="point-icon">🟢</span>碳纖維機身顏色偏深灰藍，翼尖弧形彎曲</li>
+            <li class="id-point"><span class="point-icon">🟢</span>Trent XWB 引擎為橢圓形進氣口（非正圓）</li>
+          </ul>
+          <span class="shape-tag shape-airbus">▷ 黑色眼影機鼻 = A350 必殺技</span>
+        </div>
+        <div class="card-footer">
+          <span class="engine-info">引擎：<span class="engine-highlight">RR Trent XWB（獨家）</span></span>
+          <span class="seats-range">座位：300–440</span>
+        </div>
+      </div>
+
+      <!-- A380 -->
+      <div class="aircraft-card airbus">
+        <div class="card-image">
+          <div class="img-loading">LOADING IMAGE…</div>
+          <img
+            data-src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/A6-EDY_A380_Emirates_31_jan_2013_jfk_%288442269364%29_%28cropped%29.jpg/1280px-A6-EDY_A380_Emirates_31_jan_2013_jfk_%288442269364%29_%28cropped%29.jpg"
+            alt="Airbus A380"
+            onload="this.classList.add('loaded')"
+            onerror="this.parentElement.querySelector('.img-loading').textContent='A380'">
+          <div class="img-overlay"></div>
+          <div class="img-credit">© Wikimedia Commons CC-BY-SA</div>
+        </div>
+        <div class="card-header">
+          <div>
+            <div class="model-name">A380</div>
+            <div class="model-type">A380-800（唯一型號）</div>
+          </div>
+          <div class="engine-count">四發 Quad</div>
+        </div>
+        <div class="card-body">
+          <ul class="id-points">
+            <li class="id-point"><span class="point-icon">🟢</span><strong style="color:#0f1923">全雙層艙體</strong> — 整機身全寬雙層，比 747 駝背更高更胖</li>
+            <li class="id-point"><span class="point-icon">🟢</span>機身截面橢圓形，視覺上極為龐大</li>
+            <li class="id-point"><span class="point-icon">🟢</span>主起落架 22 輪，地面停靠震撼十足</li>
+          </ul>
+          <span class="shape-tag shape-airbus">▷ 全雙層 + 超肥身 = A380</span>
+        </div>
+        <div class="card-footer">
+          <span class="engine-info">引擎：<span class="engine-highlight">RR Trent 970 / Engine Alliance GP7200</span></span>
+          <span class="seats-range">座位：555–853</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== ENGINE TAB ===== -->
+  <div id="tab-engine" class="tab-panel">
+    <div class="section-header">
+      <span class="brand-badge badge-engine">ENGINES</span>
+      <span class="section-title">主要引擎廠牌與型號</span>
+    </div>
+
+    <div class="engine-section">
+
+      <div class="engine-maker-header">🏭 CFM International（GE + Safran 合資）</div>
+      <table class="engine-table">
+        <thead><tr><th>引擎型號</th><th>推力</th><th>適用機型</th><th>特色</th></tr></thead>
+        <tbody>
+          <tr><td><span class="engine-model-name">CFM56-3</span></td><td>89–105 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">737 Classic</span></div></td><td>扁平下半部引擎外殼</td></tr>
+          <tr><td><span class="engine-model-name">CFM56-5B</span></td><td>97–147 kN</td><td><div class="compatible-models"><span class="model-chip chip-airbus">A318/319/320/321</span></div></td><td>A320 家族最常見</td></tr>
+          <tr><td><span class="engine-model-name">CFM56-7B</span></td><td>87–121 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">737 NG</span></div></td><td>737-600/700/800/900 標配</td></tr>
+          <tr><td><span class="engine-model-name">CFM56-5C</span></td><td>138–151 kN</td><td><div class="compatible-models"><span class="model-chip chip-airbus">A340-200/300</span></div></td><td>四發布局，每具推力較小</td></tr>
+          <tr><td><span class="engine-model-name">LEAP-1A</span></td><td>111–147 kN</td><td><div class="compatible-models"><span class="model-chip chip-airbus">A320neo 家族</span></div></td><td>新世代省油，比 -5B 節省 15%</td></tr>
+          <tr><td><span class="engine-model-name">LEAP-1B</span></td><td>89–130 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">737 MAX</span></div></td><td>737 MAX 唯一引擎選項</td></tr>
+        </tbody>
+      </table>
+
+      <div class="engine-maker-header">🏭 Rolls-Royce（勞斯萊斯，英國）</div>
+      <table class="engine-table">
+        <thead><tr><th>引擎型號</th><th>推力</th><th>適用機型</th><th>特色</th></tr></thead>
+        <tbody>
+          <tr><td><span class="engine-model-name">RB211-535</span></td><td>160–193 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">757</span></div></td><td>三軸設計，低壓渦輪獨立</td></tr>
+          <tr><td><span class="engine-model-name">RB211-524</span></td><td>222–270 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">747</span><span class="model-chip chip-boeing">767</span></div></td><td>747-400 大量使用</td></tr>
+          <tr><td><span class="engine-model-name">Trent 700</span></td><td>300–340 kN</td><td><div class="compatible-models"><span class="model-chip chip-airbus">A330 CEO</span></div></td><td>三軸設計、低噪音</td></tr>
+          <tr><td><span class="engine-model-name">Trent 500</span></td><td>236–249 kN</td><td><div class="compatible-models"><span class="model-chip chip-airbus">A340-500/600</span></div></td><td>高推力四發應用</td></tr>
+          <tr><td><span class="engine-model-name">Trent 970</span></td><td>311–340 kN</td><td><div class="compatible-models"><span class="model-chip chip-airbus">A380</span></div></td><td>世界最大民航引擎之一</td></tr>
+          <tr><td><span class="engine-model-name">Trent 1000</span></td><td>240–360 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">787</span></div></td><td>鋸齒尾噴嘴（Chevron）降噪</td></tr>
+          <tr><td><span class="engine-model-name">Trent XWB</span></td><td>330–430 kN</td><td><div class="compatible-models"><span class="model-chip chip-airbus">A350（獨家）</span></div></td><td>橢圓進氣口、最高效率渦扇</td></tr>
+          <tr><td><span class="engine-model-name">Trent 7000</span></td><td>~320 kN</td><td><div class="compatible-models"><span class="model-chip chip-airbus">A330neo</span></div></td><td>基於 Trent 1000，低油耗</td></tr>
+        </tbody>
+      </table>
+
+      <div class="engine-maker-header">🏭 GE Aerospace（通用電氣，美國）</div>
+      <table class="engine-table">
+        <thead><tr><th>引擎型號</th><th>推力</th><th>適用機型</th><th>特色</th></tr></thead>
+        <tbody>
+          <tr><td><span class="engine-model-name">CF6-80C2</span></td><td>233–276 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">747</span><span class="model-chip chip-boeing">767</span><span class="model-chip chip-airbus">A300</span><span class="model-chip chip-airbus">A330</span></div></td><td>最廣泛應用的廣體引擎之一</td></tr>
+          <tr><td><span class="engine-model-name">GE90</span></td><td>330–513 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">777（獨家）</span></div></td><td>曾是世界最大推力引擎，直徑 3.43m</td></tr>
+          <tr><td><span class="engine-model-name">GEnx-1B</span></td><td>240–340 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">787</span></div></td><td>複合材料風扇葉，鋸齒降噪</td></tr>
+          <tr><td><span class="engine-model-name">GEnx-2B</span></td><td>296–311 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">747-8</span></div></td><td>747-8 四發版本</td></tr>
+          <tr><td><span class="engine-model-name">GE9X</span></td><td>~470 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">777X（獨家）</span></div></td><td>複合材料風扇、陶瓷耐熱</td></tr>
+          <tr><td><span class="engine-model-name">GP7200</span></td><td>~340 kN</td><td><div class="compatible-models"><span class="model-chip chip-airbus">A380（Engine Alliance）</span></div></td><td>GE + P&W 合資</td></tr>
+        </tbody>
+      </table>
+
+      <div class="engine-maker-header">🏭 Pratt & Whitney（普惠，美國）</div>
+      <table class="engine-table">
+        <thead><tr><th>引擎型號</th><th>推力</th><th>適用機型</th><th>特色</th></tr></thead>
+        <tbody>
+          <tr><td><span class="engine-model-name">PW2000</span></td><td>162–185 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">757</span></div></td><td>美軍 C-17 也使用同家族</td></tr>
+          <tr><td><span class="engine-model-name">PW4000</span></td><td>222–436 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">747</span><span class="model-chip chip-boeing">767</span><span class="model-chip chip-boeing">777</span><span class="model-chip chip-airbus">A330</span></div></td><td>應用最廣的高涵道比引擎系列</td></tr>
+          <tr><td><span class="engine-model-name">PW1100G-JM</span></td><td>111–147 kN</td><td><div class="compatible-models"><span class="model-chip chip-airbus">A320neo 家族</span></div></td><td>GTF 齒輪式渦扇，風扇與低壓渦輪解耦</td></tr>
+          <tr><td><span class="engine-model-name">IAE V2500</span></td><td>97–147 kN</td><td><div class="compatible-models"><span class="model-chip chip-airbus">A320 CEO 家族</span></div></td><td>國際航空引擎聯合體（P&W + RR + MTU）</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== TIPS TAB ===== -->
+  <div id="tab-tips" class="tab-panel">
+    <div class="section-header">
+      <span class="brand-badge" style="background:rgba(255,255,255,0.08);color:#0f1923;border:1px solid rgba(255,255,255,0.2)">SPOTTING</span>
+      <span class="section-title">航迷快速辨識秘訣</span>
+    </div>
+
+    <div class="tips-grid">
+      <div class="tip-card">
+        <div class="tip-number">01</div>
+        <div class="tip-title">先看引擎數量</div>
+        <div class="tip-body">四發（Quad）在現代基本只剩 <strong style="color:#0055b3">747</strong>、<strong style="color:#007a62">A340</strong>、<strong style="color:#007a62">A380</strong>。747 有駝背，A340 和 A330 長得一樣要數引擎，A380 全雙層超肥機身。其餘現代客機幾乎都是雙發。</div>
+      </div>
+
+      <div class="tip-card">
+        <div class="tip-number">02</div>
+        <div class="tip-title">機鼻形狀是關鍵</div>
+        <div class="tip-body">
+          <div class="compare-row">
+            <div class="compare-item compare-boeing"><div class="compare-label">Boeing</div><div class="compare-text">機鼻偏尖，駕駛艙玻璃通常有「下巴」，整體較銳利有稜角</div></div>
+            <div class="compare-item compare-airbus"><div class="compare-label">Airbus</div><div class="compare-text">機鼻圓滑鈍圓，駕駛艙玻璃較方正，整體流線柔和</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tip-card">
+        <div class="tip-number">03</div>
+        <div class="tip-title">翼尖小翼辨識</div>
+        <div class="tip-body">
+          <div class="winglet-grid">
+            <div class="winglet-card"><div class="winglet-name boeing-wl">Blended Winglet</div><div class="winglet-desc">737 NG，大型上翹融合式</div></div>
+            <div class="winglet-card"><div class="winglet-name boeing-wl">AT Winglet</div><div class="winglet-desc">737 MAX，上下各一刀片</div></div>
+            <div class="winglet-card"><div class="winglet-name boeing-wl">Raked Wingtip</div><div class="winglet-desc">787/747-8，後掠無翼刀</div></div>
+            <div class="winglet-card"><div class="winglet-name airbus-wl">Wingtip Fence</div><div class="winglet-desc">A320 CEO，上下兩片小翼刀</div></div>
+            <div class="winglet-card"><div class="winglet-name airbus-wl">Sharklet</div><div class="winglet-desc">A320neo，高大鯊魚鰭</div></div>
+            <div class="winglet-card"><div class="winglet-name airbus-wl">Curved Wingtip</div><div class="winglet-desc">A350，弧形彎曲翼尖</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tip-card">
+        <div class="tip-number">04</div>
+        <div class="tip-title">尾錐（APU）形狀</div>
+        <div class="tip-body">
+          <div class="compare-row">
+            <div class="compare-item compare-boeing"><div class="compare-label">Boeing</div><div class="compare-text">尾錐較短且鈍，結束較突然，開口在中央</div></div>
+            <div class="compare-item compare-airbus"><div class="compare-label">Airbus</div><div class="compare-text">尾錐長而細尖，像鉛筆尖般延伸，是標誌性特徵</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tip-card">
+        <div class="tip-number">05</div>
+        <div class="tip-title">三步驟識別法</div>
+        <div class="tip-body" style="font-size:0.82rem;line-height:1.8;color:#4a5a6e;">
+          <strong style="color:#0f1923">Step 1</strong> 數引擎數量（2 或 4）<br>
+          <strong style="color:#0f1923">Step 2</strong> 看機鼻形狀（尖/圓）和翼尖類型<br>
+          <strong style="color:#0f1923">Step 3</strong> 看引擎形狀（扁/圓）和尾錐形狀<br><br>
+          <span style="color:#b36a00">特殊記憶點：</span><br>
+          747 駝背 · A380 超胖 · A350 眼影 · 787 鋸齒 · 737 扁引擎
+        </div>
+      </div>
+
+      <div class="tip-card">
+        <div class="tip-number">06</div>
+        <div class="tip-title">看引擎進氣口</div>
+        <div class="tip-body">
+          <div style="font-size:0.8rem;line-height:1.7;color:#4a5a6e;">
+            <strong style="color:#b36a00">鋸齒狀（Chevron）</strong> → 787 / 747-8<br>
+            <strong style="color:#0055b3">扁平底部</strong> → 737 Classic / NG<br>
+            <strong style="color:#007a62">橢圓形進氣口</strong> → A350 Trent XWB<br>
+            <strong style="color:#0f1923">超大正圓形</strong> → 777 GE90
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;">
+      <div style="font-family:'Orbitron',sans-serif;font-size:0.85rem;font-weight:700;color:var(--accent-amber);margin-bottom:16px;letter-spacing:0.08em;">⚡ 工程師視角補充</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;font-size:0.8rem;color:var(--text-secondary);line-height:1.6;">
+        <div><strong style="color:#0055b3;display:block;margin-bottom:6px">波音設計哲學</strong>重視飛行員傳統操感，737 家族從 1967 年延續至今保留相似操縱特性。以液壓系統為主，777 開始全面電傳操控（FBW）。</div>
+        <div><strong style="color:#007a62;display:block;margin-bottom:6px">空巴設計哲學</strong>A320 起即全面電傳操控（Fly-by-Wire），側桿操縱（Sidestick）取代傳統駕駛盤，加入包線保護防止飛行員過度操作。</div>
+        <div><strong style="color:#0055b3;display:block;margin-bottom:6px">Boeing 駕駛艙</strong>傳統駕駛盤（Yoke），儀表板整體較傳統，787/777X 有大型觸控顯示器。</div>
+        <div><strong style="color:#007a62;display:block;margin-bottom:6px">Airbus 駕駛艙</strong>側桿位於左右側壁，數位化程度高，跨型別訓練成本低，A320/A330/A350 操作高度一致。</div>
+      </div>
+    </div>
+
+    <div class="scroll-hint" style="margin-top:28px;">// END OF GUIDE — HAPPY SPOTTING ✈</div>
+  </div>
+
+</div>
+
+<script>
+  function switchTab(tab, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.className = 'tab-btn');
+    document.getElementById('tab-' + tab).classList.add('active');
+    const map = { boeing: 'active-boeing', airbus: 'active-airbus', engine: 'active-engine', tips: 'active-tips' };
+    btn.classList.add(map[tab]);
+    loadImagesInPanel(tab);
+  }
+
+  // Lazy load images per panel
+  function loadImagesInPanel(tab) {
+    const panel = document.getElementById('tab-' + tab);
+    if (!panel) return;
+    panel.querySelectorAll('img[data-src]').forEach(img => {
+      img.src = img.getAttribute('data-src');
+      img.removeAttribute('data-src');
+    });
+  }
+
+  // Load first tab images on page load
+  window.addEventListener('load', () => loadImagesInPanel('boeing'));
+</script>
+</body>
+</html>
