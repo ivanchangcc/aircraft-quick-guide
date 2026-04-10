@@ -169,6 +169,8 @@
     border-radius: 12px;
     overflow: hidden;
     transition: border-color 0.25s, box-shadow 0.25s, transform 0.2s;
+    display: flex;
+    flex-direction: column;
   }
 
   .aircraft-card:hover { transform: translateY(-2px); }
@@ -202,19 +204,6 @@
     inset: 0;
     background: linear-gradient(to bottom, transparent 50%, var(--surface) 100%);
     z-index: 1;
-  }
-
-  .img-loading {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 0.6rem;
-    color: var(--text-dim);
-    letter-spacing: 0.1em;
-    z-index: 0;
   }
 
   .img-credit {
@@ -266,7 +255,7 @@
   .boeing .engine-count { background: rgba(0,98,204,0.15); color: var(--boeing-light); }
   .airbus .engine-count { background: rgba(0,201,160,0.1); color: var(--airbus-teal); }
 
-  .card-body { padding: 14px 20px; }
+  .card-body { padding: 14px 20px; flex: 1; }
 
   .id-points { list-style: none; display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
   .id-point { display: flex; gap: 10px; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4; }
@@ -379,6 +368,117 @@
     gap: 10px;
   }
   .cat-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* ENGINE MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .modal-overlay.open { display: flex; animation: fadeIn 0.2s ease; }
+
+  .modal-box {
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    max-width: 560px;
+    width: 100%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    background: rgba(0,0,0,0.35);
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    color: #fff;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+  .modal-close:hover { background: rgba(0,0,0,0.6); }
+
+  .modal-img-wrap {
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: #1a2535;
+  }
+  .modal-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+  }
+  .modal-img-wrap.no-img { display: none; }
+
+  .modal-content {
+    padding: 20px 24px 24px;
+    overflow-y: auto;
+  }
+
+  .modal-engine-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--accent-amber);
+    margin-bottom: 3px;
+  }
+  .modal-manufacturer {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+    margin-bottom: 16px;
+  }
+
+  .modal-detail-grid {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 10px 20px;
+    font-size: 0.82rem;
+  }
+  .modal-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding-top: 2px;
+    white-space: nowrap;
+  }
+  .modal-value { color: var(--text-secondary); line-height: 1.5; }
+  .modal-value strong { color: var(--text-primary); }
+
+  .engine-table tr { cursor: pointer; }
+  .engine-table tr:hover td { background: rgba(179,106,0,0.06); color: var(--text-primary); }
+
+  @media (max-width: 600px) {
+    .modal-img-wrap { height: 160px; }
+    .modal-engine-name { font-size: 1rem; }
+    .modal-content { padding: 16px 18px 20px; }
+    .modal-detail-grid { gap: 8px 14px; font-size: 0.78rem; }
+  }
 </style>
 </head>
 <body>
@@ -391,10 +491,10 @@
   </header>
 
   <div class="tab-bar">
-    <button class="tab-btn active-boeing" onclick="switchTab('boeing', this)">✈ 波音 Boeing</button>
-    <button class="tab-btn" onclick="switchTab('airbus', this)">✈ 空巴 Airbus</button>
-    <button class="tab-btn" onclick="switchTab('engine', this)">⚙ 引擎廠牌</button>
-    <button class="tab-btn" onclick="switchTab('tips', this)">👁 快速辨識</button>
+    <button class="tab-btn active-boeing" onclick="switchTab('boeing', this)">波音 Boeing</button>
+    <button class="tab-btn" onclick="switchTab('airbus', this)">空巴 Airbus</button>
+    <button class="tab-btn" onclick="switchTab('engine', this)">引擎廠牌</button>
+    <button class="tab-btn" onclick="switchTab('tips', this)">快速辨識</button>
   </div>
 
   <!-- ===== BOEING TAB ===== -->
@@ -410,12 +510,11 @@
       <!-- 737 NG -->
       <div class="aircraft-card boeing">
         <div class="card-image">
-          <div class="img-loading">LOADING IMAGE…</div>
           <img
             data-src="images/737ng.jpg"
             alt="Boeing 737 NG"
             onload="this.classList.add('loaded')"
-            onerror="this.parentElement.querySelector('.img-loading').textContent='737 NG'">
+            onerror="this.style.opacity='0'">
           <div class="img-overlay"></div>
           <div class="img-credit">© Wikimedia Commons CC-BY-SA</div>
         </div>
@@ -443,12 +542,11 @@
       <!-- 737 MAX -->
       <div class="aircraft-card boeing">
         <div class="card-image">
-          <div class="img-loading">LOADING IMAGE…</div>
           <img
             data-src="images/737max.jpg"
             alt="Boeing 737 MAX"
             onload="this.classList.add('loaded')"
-            onerror="this.parentElement.querySelector('.img-loading').textContent='737 MAX'">
+            onerror="this.style.opacity='0'">
           <div class="img-overlay"></div>
           <div class="img-credit">© Wikimedia Commons CC-BY-SA</div>
         </div>
@@ -476,12 +574,11 @@
       <!-- 757 -->
       <div class="aircraft-card boeing">
         <div class="card-image">
-          <div class="img-loading">LOADING IMAGE…</div>
           <img
             data-src="images/757.jpg"
             alt="Boeing 757"
             onload="this.classList.add('loaded')"
-            onerror="this.parentElement.querySelector('.img-loading').textContent='757'">
+            onerror="this.style.opacity='0'">
           <div class="img-overlay"></div>
           <div class="img-credit">© Wikimedia Commons CC-BY-SA</div>
         </div>
@@ -514,12 +611,11 @@
       <!-- 747 -->
       <div class="aircraft-card boeing">
         <div class="card-image">
-          <div class="img-loading">LOADING IMAGE…</div>
           <img
             data-src="images/747.jpg"
             alt="Boeing 747"
             onload="this.classList.add('loaded')"
-            onerror="this.parentElement.querySelector('.img-loading').textContent='747'">
+            onerror="this.style.opacity='0'">
           <div class="img-overlay"></div>
           <div class="img-credit">© Wikimedia Commons CC-BY-SA</div>
         </div>
@@ -547,12 +643,11 @@
       <!-- 767 -->
       <div class="aircraft-card boeing">
         <div class="card-image">
-          <div class="img-loading">LOADING IMAGE…</div>
           <img
             data-src="images/767.jpg"
             alt="Boeing 767"
             onload="this.classList.add('loaded')"
-            onerror="this.parentElement.querySelector('.img-loading').textContent='767'">
+            onerror="this.style.opacity='0'">
           <div class="img-overlay"></div>
           <div class="img-credit">© Wikimedia Commons CC-BY-SA</div>
         </div>
@@ -580,12 +675,11 @@
       <!-- 777 -->
       <div class="aircraft-card boeing">
         <div class="card-image">
-          <div class="img-loading">LOADING IMAGE…</div>
           <img
             data-src="images/777.jpg"
             alt="Boeing 777"
             onload="this.classList.add('loaded')"
-            onerror="this.parentElement.querySelector('.img-loading').textContent='777'">
+            onerror="this.style.opacity='0'">
           <div class="img-overlay"></div>
           <div class="img-credit">© Wikimedia Commons CC-BY-SA</div>
         </div>
@@ -613,12 +707,11 @@
       <!-- 787 -->
       <div class="aircraft-card boeing">
         <div class="card-image">
-          <div class="img-loading">LOADING IMAGE…</div>
           <img
             data-src="images/787.jpg"
             alt="Boeing 787 Dreamliner"
             onload="this.classList.add('loaded')"
-            onerror="this.parentElement.querySelector('.img-loading').textContent='787'">
+            onerror="this.style.opacity='0'">
           <div class="img-overlay"></div>
           <div class="img-credit">© Wikimedia Commons CC-BY-SA</div>
         </div>
@@ -659,12 +752,11 @@
       <!-- A320 CEO -->
       <div class="aircraft-card airbus">
         <div class="card-image">
-          <div class="img-loading">LOADING IMAGE…</div>
           <img
             data-src="images/a320ceo.jpg"
             alt="Airbus A320 CEO"
             onload="this.classList.add('loaded')"
-            onerror="this.parentElement.querySelector('.img-loading').textContent='A320 CEO'">
+            onerror="this.style.opacity='0'">
           <div class="img-overlay"></div>
           <div class="img-credit">© Wikimedia Commons CC-BY-SA</div>
         </div>
@@ -693,12 +785,11 @@
       <!-- A320 NEO -->
       <div class="aircraft-card airbus">
         <div class="card-image">
-          <div class="img-loading">LOADING IMAGE…</div>
           <img
             data-src="images/a320neo.jpg"
             alt="Airbus A320neo"
             onload="this.classList.add('loaded')"
-            onerror="this.parentElement.querySelector('.img-loading').textContent='A320neo'">
+            onerror="this.style.opacity='0'">
           <div class="img-overlay"></div>
           <div class="img-credit">© Wikimedia Commons CC-BY-SA</div>
         </div>
@@ -731,12 +822,11 @@
       <!-- A330 -->
       <div class="aircraft-card airbus">
         <div class="card-image">
-          <div class="img-loading">LOADING IMAGE…</div>
           <img
             data-src="images/a330.jpg"
             alt="Airbus A330"
             onload="this.classList.add('loaded')"
-            onerror="this.parentElement.querySelector('.img-loading').textContent='A330'">
+            onerror="this.style.opacity='0'">
           <div class="img-overlay"></div>
           <div class="img-credit">© Wikimedia Commons CC-BY-SA</div>
         </div>
@@ -764,12 +854,11 @@
       <!-- A340 -->
       <div class="aircraft-card airbus">
         <div class="card-image">
-          <div class="img-loading">LOADING IMAGE…</div>
           <img
             data-src="images/a340.jpg"
             alt="Airbus A340"
             onload="this.classList.add('loaded')"
-            onerror="this.parentElement.querySelector('.img-loading').textContent='A340'">
+            onerror="this.style.opacity='0'">
           <div class="img-overlay"></div>
           <div class="img-credit">© Wikimedia Commons CC-BY-SA</div>
         </div>
@@ -797,12 +886,11 @@
       <!-- A350 -->
       <div class="aircraft-card airbus">
         <div class="card-image">
-          <div class="img-loading">LOADING IMAGE…</div>
           <img
             data-src="images/a350.jpg"
             alt="Airbus A350"
             onload="this.classList.add('loaded')"
-            onerror="this.parentElement.querySelector('.img-loading').textContent='A350'">
+            onerror="this.style.opacity='0'">
           <div class="img-overlay"></div>
           <div class="img-credit">© Wikimedia Commons CC-BY-SA</div>
         </div>
@@ -830,12 +918,11 @@
       <!-- A380 -->
       <div class="aircraft-card airbus">
         <div class="card-image">
-          <div class="img-loading">LOADING IMAGE…</div>
           <img
             data-src="images/a380.jpg"
             alt="Airbus A380"
             onload="this.classList.add('loaded')"
-            onerror="this.parentElement.querySelector('.img-loading').textContent='A380'">
+            onerror="this.style.opacity='0'">
           <div class="img-overlay"></div>
           <div class="img-credit">© Wikimedia Commons CC-BY-SA</div>
         </div>
@@ -876,12 +963,12 @@
       <table class="engine-table">
         <thead><tr><th>引擎型號</th><th>推力</th><th>適用機型</th><th>特色</th></tr></thead>
         <tbody>
-          <tr><td><span class="engine-model-name">CFM56-3</span></td><td>89–105 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">737 Classic</span></div></td><td>扁平下半部引擎外殼</td></tr>
-          <tr><td><span class="engine-model-name">CFM56-5B</span></td><td>97–147 kN</td><td><div class="compatible-models"><span class="model-chip chip-airbus">A318/319/320/321</span></div></td><td>A320 家族最常見</td></tr>
-          <tr><td><span class="engine-model-name">CFM56-7B</span></td><td>87–121 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">737 NG</span></div></td><td>737-600/700/800/900 標配</td></tr>
-          <tr><td><span class="engine-model-name">CFM56-5C</span></td><td>138–151 kN</td><td><div class="compatible-models"><span class="model-chip chip-airbus">A340-200/300</span></div></td><td>四發布局，每具推力較小</td></tr>
-          <tr><td><span class="engine-model-name">LEAP-1A</span></td><td>111–147 kN</td><td><div class="compatible-models"><span class="model-chip chip-airbus">A320neo 家族</span></div></td><td>新世代省油，比 -5B 節省 15%</td></tr>
-          <tr><td><span class="engine-model-name">LEAP-1B</span></td><td>89–130 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">737 MAX</span></div></td><td>737 MAX 唯一引擎選項</td></tr>
+          <tr onclick="openEngineModal('CFM56-3')" ><td><span class="engine-model-name">CFM56-3</span></td><td>89–105 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">737 Classic</span></div></td><td>扁平下半部引擎外殼</td></tr>
+          <tr onclick="openEngineModal('CFM56-5B')" ><td><span class="engine-model-name">CFM56-5B</span></td><td>97–147 kN</td><td><div class="compatible-models"><span class="model-chip chip-airbus">A318/319/320/321</span></div></td><td>A320 家族最常見</td></tr>
+          <tr onclick="openEngineModal('CFM56-7B')" ><td><span class="engine-model-name">CFM56-7B</span></td><td>87–121 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">737 NG</span></div></td><td>737-600/700/800/900 標配</td></tr>
+          <tr onclick="openEngineModal('CFM56-5C')" ><td><span class="engine-model-name">CFM56-5C</span></td><td>138–151 kN</td><td><div class="compatible-models"><span class="model-chip chip-airbus">A340-200/300</span></div></td><td>四發布局，每具推力較小</td></tr>
+          <tr onclick="openEngineModal('LEAP-1A')" ><td><span class="engine-model-name">LEAP-1A</span></td><td>111–147 kN</td><td><div class="compatible-models"><span class="model-chip chip-airbus">A320neo 家族</span></div></td><td>新世代省油，比 -5B 節省 15%</td></tr>
+          <tr onclick="openEngineModal('LEAP-1B')" ><td><span class="engine-model-name">LEAP-1B</span></td><td>89–130 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">737 MAX</span></div></td><td>737 MAX 唯一引擎選項</td></tr>
         </tbody>
       </table>
 
@@ -889,14 +976,14 @@
       <table class="engine-table">
         <thead><tr><th>引擎型號</th><th>推力</th><th>適用機型</th><th>特色</th></tr></thead>
         <tbody>
-          <tr><td><span class="engine-model-name">RB211-535</span></td><td>160–193 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">757</span></div></td><td>三軸設計，低壓渦輪獨立</td></tr>
-          <tr><td><span class="engine-model-name">RB211-524</span></td><td>222–270 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">747</span><span class="model-chip chip-boeing">767</span></div></td><td>747-400 大量使用</td></tr>
-          <tr><td><span class="engine-model-name">Trent 700</span></td><td>300–340 kN</td><td><div class="compatible-models"><span class="model-chip chip-airbus">A330 CEO</span></div></td><td>三軸設計、低噪音</td></tr>
-          <tr><td><span class="engine-model-name">Trent 500</span></td><td>236–249 kN</td><td><div class="compatible-models"><span class="model-chip chip-airbus">A340-500/600</span></div></td><td>高推力四發應用</td></tr>
-          <tr><td><span class="engine-model-name">Trent 970</span></td><td>311–340 kN</td><td><div class="compatible-models"><span class="model-chip chip-airbus">A380</span></div></td><td>世界最大民航引擎之一</td></tr>
-          <tr><td><span class="engine-model-name">Trent 1000</span></td><td>240–360 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">787</span></div></td><td>鋸齒尾噴嘴（Chevron）降噪</td></tr>
-          <tr><td><span class="engine-model-name">Trent XWB</span></td><td>330–430 kN</td><td><div class="compatible-models"><span class="model-chip chip-airbus">A350（獨家）</span></div></td><td>橢圓進氣口、最高效率渦扇</td></tr>
-          <tr><td><span class="engine-model-name">Trent 7000</span></td><td>~320 kN</td><td><div class="compatible-models"><span class="model-chip chip-airbus">A330neo</span></div></td><td>基於 Trent 1000，低油耗</td></tr>
+          <tr onclick="openEngineModal('RB211-535')" ><td><span class="engine-model-name">RB211-535</span></td><td>160–193 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">757</span></div></td><td>三軸設計，低壓渦輪獨立</td></tr>
+          <tr onclick="openEngineModal('RB211-524')" ><td><span class="engine-model-name">RB211-524</span></td><td>222–270 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">747</span><span class="model-chip chip-boeing">767</span></div></td><td>747-400 大量使用</td></tr>
+          <tr onclick="openEngineModal('Trent 700')" ><td><span class="engine-model-name">Trent 700</span></td><td>300–340 kN</td><td><div class="compatible-models"><span class="model-chip chip-airbus">A330 CEO</span></div></td><td>三軸設計、低噪音</td></tr>
+          <tr onclick="openEngineModal('Trent 500')" ><td><span class="engine-model-name">Trent 500</span></td><td>236–249 kN</td><td><div class="compatible-models"><span class="model-chip chip-airbus">A340-500/600</span></div></td><td>高推力四發應用</td></tr>
+          <tr onclick="openEngineModal('Trent 970')" ><td><span class="engine-model-name">Trent 970</span></td><td>311–340 kN</td><td><div class="compatible-models"><span class="model-chip chip-airbus">A380</span></div></td><td>世界最大民航引擎之一</td></tr>
+          <tr onclick="openEngineModal('Trent 1000')" ><td><span class="engine-model-name">Trent 1000</span></td><td>240–360 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">787</span></div></td><td>鋸齒尾噴嘴（Chevron）降噪</td></tr>
+          <tr onclick="openEngineModal('Trent XWB')" ><td><span class="engine-model-name">Trent XWB</span></td><td>330–430 kN</td><td><div class="compatible-models"><span class="model-chip chip-airbus">A350（獨家）</span></div></td><td>橢圓進氣口、最高效率渦扇</td></tr>
+          <tr onclick="openEngineModal('Trent 7000')" ><td><span class="engine-model-name">Trent 7000</span></td><td>~320 kN</td><td><div class="compatible-models"><span class="model-chip chip-airbus">A330neo</span></div></td><td>基於 Trent 1000，低油耗</td></tr>
         </tbody>
       </table>
 
@@ -904,12 +991,12 @@
       <table class="engine-table">
         <thead><tr><th>引擎型號</th><th>推力</th><th>適用機型</th><th>特色</th></tr></thead>
         <tbody>
-          <tr><td><span class="engine-model-name">CF6-80C2</span></td><td>233–276 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">747</span><span class="model-chip chip-boeing">767</span><span class="model-chip chip-airbus">A300</span><span class="model-chip chip-airbus">A330</span></div></td><td>最廣泛應用的廣體引擎之一</td></tr>
-          <tr><td><span class="engine-model-name">GE90</span></td><td>330–513 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">777（獨家）</span></div></td><td>曾是世界最大推力引擎，直徑 3.43m</td></tr>
-          <tr><td><span class="engine-model-name">GEnx-1B</span></td><td>240–340 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">787</span></div></td><td>複合材料風扇葉，鋸齒降噪</td></tr>
-          <tr><td><span class="engine-model-name">GEnx-2B</span></td><td>296–311 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">747-8</span></div></td><td>747-8 四發版本</td></tr>
-          <tr><td><span class="engine-model-name">GE9X</span></td><td>~470 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">777X（獨家）</span></div></td><td>複合材料風扇、陶瓷耐熱</td></tr>
-          <tr><td><span class="engine-model-name">GP7200</span></td><td>~340 kN</td><td><div class="compatible-models"><span class="model-chip chip-airbus">A380（Engine Alliance）</span></div></td><td>GE + P&W 合資</td></tr>
+          <tr onclick="openEngineModal('CF6-80C2')" ><td><span class="engine-model-name">CF6-80C2</span></td><td>233–276 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">747</span><span class="model-chip chip-boeing">767</span><span class="model-chip chip-airbus">A300</span><span class="model-chip chip-airbus">A330</span></div></td><td>最廣泛應用的廣體引擎之一</td></tr>
+          <tr onclick="openEngineModal('GE90')" ><td><span class="engine-model-name">GE90</span></td><td>330–513 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">777（獨家）</span></div></td><td>曾是世界最大推力引擎，直徑 3.43m</td></tr>
+          <tr onclick="openEngineModal('GEnx-1B')" ><td><span class="engine-model-name">GEnx-1B</span></td><td>240–340 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">787</span></div></td><td>複合材料風扇葉，鋸齒降噪</td></tr>
+          <tr onclick="openEngineModal('GEnx-2B')" ><td><span class="engine-model-name">GEnx-2B</span></td><td>296–311 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">747-8</span></div></td><td>747-8 四發版本</td></tr>
+          <tr onclick="openEngineModal('GE9X')" ><td><span class="engine-model-name">GE9X</span></td><td>~470 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">777X（獨家）</span></div></td><td>複合材料風扇、陶瓷耐熱</td></tr>
+          <tr onclick="openEngineModal('GP7200')" ><td><span class="engine-model-name">GP7200</span></td><td>~340 kN</td><td><div class="compatible-models"><span class="model-chip chip-airbus">A380（Engine Alliance）</span></div></td><td>GE + P&W 合資</td></tr>
         </tbody>
       </table>
 
@@ -917,10 +1004,10 @@
       <table class="engine-table">
         <thead><tr><th>引擎型號</th><th>推力</th><th>適用機型</th><th>特色</th></tr></thead>
         <tbody>
-          <tr><td><span class="engine-model-name">PW2000</span></td><td>162–185 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">757</span></div></td><td>美軍 C-17 也使用同家族</td></tr>
-          <tr><td><span class="engine-model-name">PW4000</span></td><td>222–436 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">747</span><span class="model-chip chip-boeing">767</span><span class="model-chip chip-boeing">777</span><span class="model-chip chip-airbus">A330</span></div></td><td>應用最廣的高涵道比引擎系列</td></tr>
-          <tr><td><span class="engine-model-name">PW1100G-JM</span></td><td>111–147 kN</td><td><div class="compatible-models"><span class="model-chip chip-airbus">A320neo 家族</span></div></td><td>GTF 齒輪式渦扇，風扇與低壓渦輪解耦</td></tr>
-          <tr><td><span class="engine-model-name">IAE V2500</span></td><td>97–147 kN</td><td><div class="compatible-models"><span class="model-chip chip-airbus">A320 CEO 家族</span></div></td><td>國際航空引擎聯合體（P&W + RR + MTU）</td></tr>
+          <tr onclick="openEngineModal('PW2000')" ><td><span class="engine-model-name">PW2000</span></td><td>162–185 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">757</span></div></td><td>美軍 C-17 也使用同家族</td></tr>
+          <tr onclick="openEngineModal('PW4000')" ><td><span class="engine-model-name">PW4000</span></td><td>222–436 kN</td><td><div class="compatible-models"><span class="model-chip chip-boeing">747</span><span class="model-chip chip-boeing">767</span><span class="model-chip chip-boeing">777</span><span class="model-chip chip-airbus">A330</span></div></td><td>應用最廣的高涵道比引擎系列</td></tr>
+          <tr onclick="openEngineModal('PW1100G-JM')" ><td><span class="engine-model-name">PW1100G-JM</span></td><td>111–147 kN</td><td><div class="compatible-models"><span class="model-chip chip-airbus">A320neo 家族</span></div></td><td>GTF 齒輪式渦扇，風扇與低壓渦輪解耦</td></tr>
+          <tr onclick="openEngineModal('IAE V2500')" ><td><span class="engine-model-name">IAE V2500</span></td><td>97–147 kN</td><td><div class="compatible-models"><span class="model-chip chip-airbus">A320 CEO 家族</span></div></td><td>國際航空引擎聯合體（P&W + RR + MTU）</td></tr>
         </tbody>
       </table>
     </div>
@@ -1044,6 +1131,312 @@
   window.addEventListener('load', () => {
     ['boeing', 'airbus', 'engine', 'tips'].forEach(loadImagesInPanel);
   });
+
+  // ===== ENGINE MODAL =====
+  const ENGINE_DATA = {
+    'CFM56-3': {
+      image: 'images/engine-cfm56.svg',
+      manufacturer: 'CFM International（GE + Safran 合資）',
+      thrust: '89–105 kN',
+      bypassRatio: '6.0:1',
+      firstFlight: '1984',
+      type: '高涵道比雙軸渦扇引擎',
+      aircraft: ['737 Classic（-100/-200/-300/-400/-500）'],
+      features: '因 737 地面間距不足，發動機下半部外殼被壓扁成扁橢圓形，底部幾乎平整，為最大外觀特徵。'
+    },
+    'CFM56-5B': {
+      image: 'images/engine-cfm56.svg',
+      manufacturer: 'CFM International（GE + Safran 合資）',
+      thrust: '97–147 kN',
+      bypassRatio: '5.7:1',
+      firstFlight: '1993',
+      type: '高涵道比雙軸渦扇引擎',
+      aircraft: ['A318', 'A319', 'A320 CEO', 'A321 CEO'],
+      features: 'A320 家族最廣泛使用的引擎，進氣口為正圓形（離地間距充足），具 FADEC 數位控制。'
+    },
+    'CFM56-7B': {
+      image: 'images/engine-cfm56.svg',
+      manufacturer: 'CFM International（GE + Safran 合資）',
+      thrust: '87–121 kN',
+      bypassRatio: '5.1:1',
+      firstFlight: '1996',
+      type: '高涵道比雙軸渦扇引擎',
+      aircraft: ['737 NG（-600/-700/-800/-900）'],
+      features: '737 NG 標配引擎，外殼仍有輕微扁平化但比 CFM56-3 改善，翼下掛載位置前移。'
+    },
+    'CFM56-5C': {
+      image: 'images/engine-cfm56.svg',
+      manufacturer: 'CFM International（GE + Safran 合資）',
+      thrust: '138–151 kN',
+      bypassRatio: '6.6:1',
+      firstFlight: '1991',
+      type: '高涵道比雙軸渦扇引擎',
+      aircraft: ['A340-200', 'A340-300'],
+      features: '四發布局，每具推力相對較小。為 A340 早期型號的唯一引擎選項，風扇直徑 1.836m。'
+    },
+    'LEAP-1A': {
+      image: 'images/engine-leap.svg',
+      manufacturer: 'CFM International（GE + Safran 合資）',
+      thrust: '111–147 kN',
+      bypassRatio: '11:1',
+      firstFlight: '2013',
+      type: '新世代高涵道比渦扇引擎',
+      aircraft: ['A320neo', 'A321neo', 'A319neo'],
+      features: '採用複合材料風扇葉片、3D 列印燃油噴嘴，比 CFM56-5B 省油約 15%。進氣口更大更圓。'
+    },
+    'LEAP-1B': {
+      image: 'images/engine-leap.svg',
+      manufacturer: 'CFM International（GE + Safran 合資）',
+      thrust: '89–130 kN',
+      bypassRatio: '9:1',
+      firstFlight: '2014',
+      type: '新世代高涵道比渦扇引擎',
+      aircraft: ['737 MAX（全型號）'],
+      features: '737 MAX 唯一引擎選項，直徑比 CFM56-7B 大但掛載位置上移並前傾，造成 MCAS 事件背景。'
+    },
+    'RB211-535': {
+      image: 'images/engine-rb211.svg',
+      manufacturer: 'Rolls-Royce（英國）',
+      thrust: '160–193 kN',
+      bypassRatio: '4.3:1',
+      firstFlight: '1979',
+      type: '三軸高涵道比渦扇引擎',
+      aircraft: ['757-200', '757-300'],
+      features: '三軸設計（低壓、中壓、高壓各自獨立轉軸），低壓渦輪獨立運作，燃燒效率高。'
+    },
+    'RB211-524': {
+      image: 'images/engine-rb211.svg',
+      manufacturer: 'Rolls-Royce（英國）',
+      thrust: '222–270 kN',
+      bypassRatio: '4.3:1',
+      firstFlight: '1976',
+      type: '三軸高涵道比渦扇引擎',
+      aircraft: ['747-200', '747-400', '767'],
+      features: '747-400 廣泛採用的引擎之一，三軸設計帶來優異的節流響應與低污染排放。'
+    },
+    'Trent 700': {
+      image: 'images/engine-trent700.svg',
+      manufacturer: 'Rolls-Royce（英國）',
+      thrust: '300–340 kN',
+      bypassRatio: '5.0:1',
+      firstFlight: '1992',
+      type: '三軸高涵道比渦扇引擎',
+      aircraft: ['A330 CEO（-200/-300）'],
+      features: '基於 RB211 三軸架構，A330 CEO 最主要引擎選項之一，低噪音設計，廣受長途航空公司採用。'
+    },
+    'Trent 500': {
+      image: 'images/engine-trent700.svg',
+      manufacturer: 'Rolls-Royce（英國）',
+      thrust: '236–249 kN',
+      bypassRatio: '8.5:1',
+      firstFlight: '1999',
+      type: '三軸高涵道比渦扇引擎',
+      aircraft: ['A340-500', 'A340-600'],
+      features: '四發布局使用，每具推力較 Trent 700 小。A340-600 採用四具 Trent 500，總推力可達 1,000 kN。'
+    },
+    'Trent 970': {
+      image: 'images/engine-trent900.svg',
+      manufacturer: 'Rolls-Royce（英國）',
+      thrust: '311–340 kN',
+      bypassRatio: '8.7:1',
+      firstFlight: '2004',
+      type: '三軸超高涵道比渦扇引擎',
+      aircraft: ['A380'],
+      features: '世界最大民用航空引擎之一，風扇直徑 2.95m。2010 年曾因 Qantas QF32 事故導致全球 A380 停飛檢查。'
+    },
+    'Trent 1000': {
+      image: 'images/engine-trent1000.svg',
+      manufacturer: 'Rolls-Royce（英國）',
+      thrust: '240–360 kN',
+      bypassRatio: '10.8:1',
+      firstFlight: '2006',
+      type: '三軸高涵道比渦扇引擎',
+      aircraft: ['787-8', '787-9', '787-10'],
+      features: '進氣口與排氣口均有鋸齒唇口（Chevron）降噪設計，中間軸（IP）驅動風扇的全新三軸架構。'
+    },
+    'Trent XWB': {
+      image: 'images/engine-trentxwb.svg',
+      manufacturer: 'Rolls-Royce（英國）',
+      thrust: '330–430 kN',
+      bypassRatio: '9.3:1',
+      firstFlight: '2010',
+      type: '三軸超高涵道比渦扇引擎',
+      aircraft: ['A350-900', 'A350-1000（獨家）'],
+      features: '進氣口呈橢圓形（非正圓），為 A350 獨家引擎，目前世界上效率最高的商用渦扇引擎之一。'
+    },
+    'Trent 7000': {
+      image: 'images/engine-trent7000.svg',
+      manufacturer: 'Rolls-Royce（英國）',
+      thrust: '~320 kN',
+      bypassRatio: '10.0:1',
+      firstFlight: '2015',
+      type: '三軸高涵道比渦扇引擎',
+      aircraft: ['A330neo（-800neo/-900neo）'],
+      features: '基於 Trent 1000 平台針對 A330neo 優化，A330neo 的唯一引擎選項，比 Trent 700 省油 10%。'
+    },
+    'CF6-80C2': {
+      image: 'images/engine-cf6.svg',
+      manufacturer: 'GE Aerospace（美國）',
+      thrust: '233–276 kN',
+      bypassRatio: '5.3:1',
+      firstFlight: '1984',
+      type: '高涵道比雙軸渦扇引擎',
+      aircraft: ['747-200/400', '767-200/300', 'A300', 'A310', 'A330 CEO'],
+      features: '民航史上應用最廣的廣體引擎之一，超過 6,500 具在役，衍生型號眾多。'
+    },
+    'GE90': {
+      image: 'images/engine-ge90.svg',
+      manufacturer: 'GE Aerospace（美國）',
+      thrust: '330–513 kN',
+      bypassRatio: '8.4:1',
+      firstFlight: '1993',
+      type: '高涵道比雙軸渦扇引擎',
+      aircraft: ['777（全系列，獨家）'],
+      features: '曾是世界推力最大的商用航空引擎，風扇直徑 3.43m，比站立成人高出許多。GE90-115B 認證推力達 569 kN。'
+    },
+    'GEnx-1B': {
+      image: 'images/engine-genx.svg',
+      manufacturer: 'GE Aerospace（美國）',
+      thrust: '240–340 kN',
+      bypassRatio: '9.6:1',
+      firstFlight: '2006',
+      type: '高涵道比雙軸渦扇引擎',
+      aircraft: ['787-8', '787-9', '787-10'],
+      features: '複合材料風扇葉片，排氣口有鋸齒降噪設計，比 CF6 省油 15%，787 兩種引擎選項之一。'
+    },
+    'GEnx-2B': {
+      image: 'images/engine-genx.svg',
+      manufacturer: 'GE Aerospace（美國）',
+      thrust: '296–311 kN',
+      bypassRatio: '8.0:1',
+      firstFlight: '2009',
+      type: '高涵道比雙軸渦扇引擎',
+      aircraft: ['747-8I', '747-8F'],
+      features: '747-8 的四發版本，基於 GEnx-1B 但針對四發布局調整，无中壓壓縮機以降低重量。'
+    },
+    'GE9X': {
+      image: 'images/engine-ge9x.svg',
+      manufacturer: 'GE Aerospace（美國）',
+      thrust: '~470 kN',
+      bypassRatio: '10.0:1',
+      firstFlight: '2018',
+      type: '高涵道比雙軸渦扇引擎',
+      aircraft: ['777X（777-8/-9，獨家）'],
+      features: '複合材料風扇葉片與機匣、陶瓷基複合材料（CMC）耐熱組件，風扇直徑 3.4m，目前推力最大民用引擎之一。'
+    },
+    'GP7200': {
+      image: 'images/engine-gp7200.svg',
+      manufacturer: 'Engine Alliance（GE + P&W 合資）',
+      thrust: '~340 kN',
+      bypassRatio: '8.7:1',
+      firstFlight: '2004',
+      type: '高涵道比雙軸渦扇引擎',
+      aircraft: ['A380'],
+      features: 'GE 與 Pratt & Whitney 共同成立 Engine Alliance 開發，A380 的兩種引擎選項之一，與 Trent 970 競爭。'
+    },
+    'PW2000': {
+      image: 'images/engine-pw2000.svg',
+      manufacturer: 'Pratt & Whitney（美國）',
+      thrust: '162–185 kN',
+      bypassRatio: '5.9:1',
+      firstFlight: '1983',
+      type: '高涵道比雙軸渦扇引擎',
+      aircraft: ['757-200', '757-300'],
+      features: '757 的兩種引擎選項之一（另為 RR RB211），同家族軍用型 F117 裝備美軍 C-17 運輸機。'
+    },
+    'PW4000': {
+      image: 'images/engine-pw4000.svg',
+      manufacturer: 'Pratt & Whitney（美國）',
+      thrust: '222–436 kN',
+      bypassRatio: '4.8–6.4:1',
+      firstFlight: '1986',
+      type: '高涵道比雙軸渦扇引擎',
+      aircraft: ['747-400', '767-200/300', '777-200/300', 'A330 CEO'],
+      features: '應用最廣的高涵道比引擎系列，衍生版本覆蓋多種廣體飛機。112\" 版為 777 開發，推力達 436 kN。'
+    },
+    'PW1100G-JM': {
+      image: 'images/engine-pw1100g.svg',
+      manufacturer: 'Pratt & Whitney（美國）',
+      thrust: '111–147 kN',
+      bypassRatio: '12.1:1',
+      firstFlight: '2012',
+      type: 'GTF 齒輪式渦扇引擎',
+      aircraft: ['A320neo', 'A321neo', 'A319neo'],
+      features: '採用齒輪式渦扇（GTF）技術，風扇與低壓渦輪解耦各自最優轉速，比 V2500 省油約 16%，降噪 75%。'
+    },
+    'IAE V2500': {
+      image: 'images/engine-v2500.svg',
+      manufacturer: 'IAE（P&W + RR + MTU + JAEC 合資）',
+      thrust: '97–147 kN',
+      bypassRatio: '4.8:1',
+      firstFlight: '1987',
+      type: '高涵道比雙軸渦扇引擎',
+      aircraft: ['A319 CEO', 'A320 CEO', 'A321 CEO'],
+      features: '國際合資引擎，A320 CEO 與 CFM56-5B 並列兩大選項。進氣口圓形，可靠性高，超過 7,000 具在役。'
+    }
+  };
+
+  function openEngineModal(name) {
+    const d = ENGINE_DATA[name];
+    if (!d) return;
+    document.getElementById('modal-name').textContent = name;
+    document.getElementById('modal-manufacturer').textContent = d.manufacturer;
+    document.getElementById('modal-thrust').textContent = d.thrust;
+    document.getElementById('modal-bypass').textContent = d.bypassRatio;
+    document.getElementById('modal-first-flight').textContent = d.firstFlight;
+    document.getElementById('modal-type').textContent = d.type;
+    document.getElementById('modal-aircraft').textContent = d.aircraft.join('、');
+    document.getElementById('modal-features').textContent = d.features;
+    const imgWrap = document.getElementById('modal-img-wrap');
+    const img = document.getElementById('modal-engine-img');
+    imgWrap.classList.remove('no-img');
+    img.src = d.image;
+    img.alt = name;
+    img.onerror = () => imgWrap.classList.add('no-img');
+    document.getElementById('engine-modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeEngineModal(e) {
+    if (e && e.target !== document.getElementById('engine-modal')) return;
+    document.getElementById('engine-modal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      document.getElementById('engine-modal').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+  });
 </script>
+
+<!-- ENGINE DETAIL MODAL -->
+<div id="engine-modal" class="modal-overlay" onclick="closeEngineModal(event)">
+  <div class="modal-box">
+    <button class="modal-close" onclick="document.getElementById('engine-modal').classList.remove('open');document.body.style.overflow=''">✕</button>
+    <div id="modal-img-wrap" class="modal-img-wrap">
+      <img id="modal-engine-img" src="" alt="">
+    </div>
+    <div class="modal-content">
+      <div class="modal-engine-name" id="modal-name"></div>
+      <div class="modal-manufacturer" id="modal-manufacturer"></div>
+      <div class="modal-detail-grid">
+        <div class="modal-label">推力</div>
+        <div class="modal-value" id="modal-thrust"></div>
+        <div class="modal-label">涵道比</div>
+        <div class="modal-value" id="modal-bypass"></div>
+        <div class="modal-label">首飛年份</div>
+        <div class="modal-value" id="modal-first-flight"></div>
+        <div class="modal-label">引擎類型</div>
+        <div class="modal-value" id="modal-type"></div>
+        <div class="modal-label">適用機型</div>
+        <div class="modal-value" id="modal-aircraft"></div>
+        <div class="modal-label">特色說明</div>
+        <div class="modal-value" id="modal-features"></div>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>
