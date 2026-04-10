@@ -21,6 +21,6 @@
   <line x1="371" y1="59" x2="269" y2="161" stroke="#1a5fa8" stroke-width="0.8" opacity="0.2"/>
   <!-- Side label -->
   <rect x="0" y="155" width="640" height="65" fill="rgba(0,0,0,0.55)"/>
-  <text x="32" y="180" font-family="monospace" font-size="10" fill="#1a5fa8" opacity="0.9" letter-spacing="2">PRATT & WHITNEY</text>
+  <text x="32" y="180" font-family="monospace" font-size="10" fill="#1a5fa8" opacity="0.9" letter-spacing="2">PRATT &amp; WHITNEY</text>
   <text x="32" y="202" font-family="monospace" font-size="17" font-weight="bold" fill="white">PW4000</text>
 </svg>
